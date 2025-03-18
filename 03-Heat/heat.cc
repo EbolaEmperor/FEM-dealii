@@ -158,30 +158,41 @@ HeatEquation<dim>::HeatEquation()
 
 template <int dim>
 void HeatEquation<dim>::make_mesh(){
-  GridIn<dim> grid_in;
-  grid_in.attach_triangulation(triangulation);
-  std::ifstream input_file("circle-grid.inp");
+  // GridIn<dim> grid_in;
+  // grid_in.attach_triangulation(triangulation);
+  // std::ifstream input_file("circle-grid.inp");
 
-  grid_in.read_ucd(input_file);
-  const SphericalManifold<dim> boundary;
-  triangulation.set_all_manifold_ids_on_boundary(0);
+  // grid_in.read_ucd(input_file);
+  // const SphericalManifold<dim> boundary;
+  // // triangulation.set_all_manifold_ids_on_boundary(0);
 
-  for(Triangulation<2>::cell_iterator cell = triangulation.begin(); cell != triangulation.end(); cell++){
-    for (unsigned int f = 0; f < GeometryInfo<dim>::faces_per_cell; ++f){
-      bool is_inner_face = true;
-      for (unsigned int v = 0; v < GeometryInfo<dim>::vertices_per_face; ++v){
-        Point<dim> &vertex = cell->face(f)->vertex(v);
-        if (std::abs(vertex.norm() - 1.0) > 0.1)
-        {
-          is_inner_face = false;
-          break;
-        }
-      }
-      if (is_inner_face)
-        cell->face(f)->set_manifold_id(1);
-    }
-  }
-  triangulation.set_manifold(1, boundary);
+  // for(Triangulation<2>::cell_iterator cell = triangulation.begin(); cell != triangulation.end(); cell++){
+  //   for (unsigned int f = 0; f < GeometryInfo<dim>::faces_per_cell; ++f){
+  //     bool is_inner_face = true;
+  //     bool is_outer_face = true;
+  //     for (unsigned int v = 0; v < GeometryInfo<dim>::vertices_per_face; ++v){
+  //       Point<dim> &vertex = cell->face(f)->vertex(v);
+  //       if (std::abs(vertex.norm() - 1.0) > 0.1)
+  //       {
+  //         is_inner_face = false;
+  //       }
+  //       if (std::abs( fabs(vertex[0]) - 1.5) > 0.01 && std::abs( fabs(vertex[1]) - 1.5) > 0.01)
+  //       {
+  //         is_outer_face = false;
+  //       }
+  //       std::cout << vertex <<  std::endl;
+  //     }
+  //     std::cout << is_outer_face << std::endl;
+  //     if (is_inner_face)
+  //       cell->face(f)->set_manifold_id(1);
+  //     if (is_outer_face)
+  //       cell->face(f)->set_manifold_id(0);
+  //   }
+  // }
+  // triangulation.set_manifold(1, boundary);
+
+  GridGenerator::hyper_cube_with_cylindrical_hole(triangulation, 1.0, 1.5);
+  // triangulation.refine_global(2);
 }
 
 
@@ -288,7 +299,7 @@ void HeatEquation<dim>::setup_system()
 
 template <int dim>
 void HeatEquation<dim>::run(){
-  const unsigned initial_global_refinement = 3;
+  const unsigned initial_global_refinement = 2;
   const unsigned n_adaptive_pre_refinement_steps = 4;
   Vector<double> tmp;
   Vector<double> forcing_terms;

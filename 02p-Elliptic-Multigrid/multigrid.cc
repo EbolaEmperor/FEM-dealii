@@ -165,10 +165,15 @@ void Elliptic<dim>::setup_system()
 
   constraints.clear();
   DoFTools::make_hanging_node_constraints(dof_handler, constraints);
-  VectorTools::interpolate_boundary_values(dof_handler,
-                                           0,
-                                           Functions::ZeroFunction<dim>(),
-                                           constraints);
+  // 这里可以设置哪些边界取齐次 Dirichlet 条件。0,1,2,3 对应 左右下上；4 对应内部圆。
+  std::set<types::boundary_id> dirichlet_boundary_ids = {0, 1, 2, 3};
+  for(int x : dirichlet_boundary_ids)
+  {
+    VectorTools::interpolate_boundary_values(dof_handler,
+                                             x,
+                                             Functions::ZeroFunction<dim>(),
+                                             constraints);
+  }
   constraints.close();
 
   { // destroy dsp after use
@@ -180,7 +185,6 @@ void Elliptic<dim>::setup_system()
 
   mg_constrained_dofs.clear();
   mg_constrained_dofs.initialize(dof_handler);
-  std::set<types::boundary_id> dirichlet_boundary_ids = {0};
   mg_constrained_dofs.make_zero_boundary_constraints(dof_handler,
                                                      dirichlet_boundary_ids);
 
@@ -418,32 +422,33 @@ void Elliptic<dim>::output_results(const unsigned int cycle) const
 }
 
 
-template <int dim>
-void Elliptic<dim>::make_grid(){
-  GridIn<dim> grid_in;
-  grid_in.attach_triangulation(triangulation);
-  std::ifstream input_file("circle-grid.inp");
+template <>
+void Elliptic<2>::make_grid(){
+  // GridIn<dim> grid_in;
+  // grid_in.attach_triangulation(triangulation);
+  // std::ifstream input_file("circle-grid.inp");
 
-  grid_in.read_ucd(input_file);
-  const SphericalManifold<dim> boundary;
-  triangulation.set_all_manifold_ids_on_boundary(0);
+  // grid_in.read_ucd(input_file);
+  // const SphericalManifold<dim> boundary;
+  // triangulation.set_all_manifold_ids_on_boundary(0, 0);
 
-  for(Triangulation<2>::cell_iterator cell = triangulation.begin(); cell != triangulation.end(); cell++){
-    for (unsigned int f = 0; f < GeometryInfo<dim>::faces_per_cell; ++f){
-      bool is_inner_face = true;
-      for (unsigned int v = 0; v < GeometryInfo<dim>::vertices_per_face; ++v){
-        Point<dim> &vertex = cell->face(f)->vertex(v);
-        if (std::abs(vertex.norm() - 1.0) > 0.1)
-        {
-          is_inner_face = false;
-          break;
-        }
-      }
-      if (is_inner_face)
-        cell->face(f)->set_manifold_id(1);
-    }
-  }
-  triangulation.set_manifold(1, boundary);
+  // for(Triangulation<2>::cell_iterator cell = triangulation.begin(); cell != triangulation.end(); cell++){
+  //   for (unsigned int f = 0; f < GeometryInfo<dim>::faces_per_cell; ++f){
+  //     bool is_inner_face = true;
+  //     for (unsigned int v = 0; v < GeometryInfo<dim>::vertices_per_face; ++v){
+  //       Point<dim> &vertex = cell->face(f)->vertex(v);
+  //       if (std::abs(vertex.norm() - 1.0) > 0.1)
+  //       {
+  //         is_inner_face = false;
+  //         break;
+  //       }
+  //     }
+  //     if (is_inner_face)
+  //       cell->face(f)->set_manifold_id(1);
+  //   }
+  // }
+  // triangulation.set_manifold(1, boundary);
+  GridGenerator::hyper_cube_with_cylindrical_hole(triangulation, 1.0, 1.5, .5, 1, true);
 }
 
 

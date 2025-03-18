@@ -190,8 +190,9 @@ void Elliptic::solve()
 
   Solution u;
   for(unsigned i = 0; i < solution.size(); i++){
-    error[i] = solution[i] - u.value(dof_location_map[i]);
     mesh_points[i] = pow(1.*i/(solution.size()-1), uniform ? 1. : 2.);
+    Point<1> pos; pos[0] = mesh_points[i];
+    error[i] = solution[i] - u.value(pos);
   }
 }
 
